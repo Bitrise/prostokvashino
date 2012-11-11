@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="bitrise.prostokvashino.base.model.Model"/>
+    <classEntry path="bitrise.prostokvashino.base.model.gui.GUIData"/>
+    <classEntry path="bitrise.prostokvashino.base.model.iso.ISOData"/>
+    <classEntry path="bitrise.prostokvashino.base.view.Application"/>
+    <classEntry path="bitrise.prostokvashino.base.view.View"/>
+    <classEntry path="bitrise.prostokvashino.base.view.iso.Scene"/>
+    <classEntry path="bitrise.prostokvashino.base.view.gui.Canvace"/>
+    <classEntry path="bitrise.prostokvashino.base.model.user.UserData"/>
+    <classEntry path="bitrise.prostokvashino.base.model.user.UserItemData"/>
+    <classEntry path="bitrise.prostokvashino.base.view.gui.components.MoneyPanel"/>
+    <classEntry path="bitrise.prostokvashino.base.view.gui.components.ScoresPanel"/>
+    <classEntry path="bitrise.prostokvashino.base.view.gui.components.ControlsPanel"/>
+    <classEntry path="bitrise.prostokvashino.base.points.PointBase"/>
+    <classEntry path="bitrise.prostokvashino.base.points.RoadBase"/>
+    <classEntry path="bitrise.prostokvashino.base.points.Map"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>

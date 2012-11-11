@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:iso="bitrise.prostokvashino.base.view.iso.*" width="900" height="600" >
+	
+	<fx:Script>
+		<![CDATA[
+			import bitrise.prostokvashino.base.points.Map;
+			import bitrise.prostokvashino.base.points.PointBase;
+			import bitrise.prostokvashino.base.points.RoadBase;
+			import bitrise.prostokvashino.editor.FileBrowser;
+			import bitrise.prostokvashino.editor.SelectImageWindow;
+			import bitrise.prostokvashino.editor.points.EditorPoint;
+			import bitrise.prostokvashino.editor.points.EditorRoad;
+			import bitrise.prostokvashino.editor.points.EditorSprite;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.FlexGlobals;
+			import mx.managers.PopUpManager;
+			
+			
+			public static const images:ArrayCollection = FileBrowser.brows("libs/scene/");
+			
+			[Bindable]
+			public var map:Map = new Map();
+			[Bindable]
+			private var road:EditorRoad;
+			[Bindable]
+			private var point:EditorPoint;
+			
+			protected function selectImageClickHandler(event:MouseEvent):void
+			{
+				const window:SelectImageWindow = new SelectImageWindow();
+				PopUpManager.addPopUp(window, FlexGlobals.topLevelApplication as DisplayObject, true);
+				PopUpManager.centerPopUp(window);
+			}
+			
+			protected function createRoadHandler(event:MouseEvent):void {
+				road = map.addRoad(new EditorRoad()) as EditorRoad;
+				road.select = true;
+				point = road.addPoint(new EditorPoint()) as EditorPoint;
+				point.select = true;
+				point.temp = true;
+			}
+			
+			protected function sceneClickHandler(event:MouseEvent):void {
+				if (road) {
+					if (point && point.temp) {
+						point.select = false;
+						point = road.addPoint(new EditorPoint()) as EditorPoint;
+						point.select = true;
+						point.temp = true;
+					}
+				} else {
+					const sprite:EditorSprite = event.target as EditorSprite;
+					if (sprite) {
+						road = sprite.road;
+						road.select = true;
+						road.redraw();
+					}
+				}
+			}
+			
+			protected function sceneMouseMoveHandler(event:MouseEvent):void {
+				if (point && road) {
+					point.move(event.localX, event.localY);
+					road.redraw();
+				}
+			}
+			
+			protected function poinCompleteClickHandler(event:MouseEvent):void
+			{
+				if (road && point) {
+					point.select = false;
+					if (point.temp) {
+						road.removePoint(point);
+					}
+					point = null;
+					road.redraw();
+				}
+			}
+			
+			protected function roadCompleteClickHandler(event:MouseEvent):void
+			{
+				if (road) {
+					road.select = false;
+					if (point) {
+						point.select = false;
+						if (point.temp) {
+							road.removePoint(point);
+						}
+						point = null;
+					}
+					road.redraw();
+					road = null;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:Group width="100%" height="100%">
+		<s:layout>
+			<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center" />
+		</s:layout>
+		<iso:Scene width="800" height="450" highlight="{true}" map="{map}" 
+				   click="sceneClickHandler(event)" 
+				   mouseMove="sceneMouseMoveHandler(event)" />
+	</s:Group>
+	
+	<s:HGroup top="5" left="5">
+		<s:Button label="Фон" click="selectImageClickHandler(event)" />
+		<s:Button label="Создать маршрут" click="createRoadHandler(event)" />
+	</s:HGroup>
+	
+	<s:HGroup bottom="5" left="5">
+		<s:HGroup visible="{road != null}" includeInLayout="{road != null}" verticalAlign="middle" >
+			<s:Label text="Маршрут: " />
+			<s:Button label="Завершить" click="roadCompleteClickHandler(event)" />
+		</s:HGroup>
+		<s:HGroup visible="{point != null}" includeInLayout="{point != null}" verticalAlign="middle" >
+			<s:Label text="Точка: " />
+			<s:Button label="Завершить" click="poinCompleteClickHandler(event)" />
+		</s:HGroup>
+	</s:HGroup>
+	
+	
+</s:WindowedApplication>

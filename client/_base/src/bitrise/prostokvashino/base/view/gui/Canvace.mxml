@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:components="bitrise.prostokvashino.base.view.gui.components.*">
+	
+	<s:HGroup width="100%" fontSize="15" fontWeight="bold" left="5" top="5">
+		<components:MoneyPanel />
+		<components:ScoresPanel />
+	</s:HGroup>
+	
+	<components:ControlsPanel bottom="5" right="5" />
+	
+	<fx:Declarations>
+		<!-- Разместить невизуальные элементы (например, службы или объекты значений) -->
+	</fx:Declarations>
+</s:Group>
