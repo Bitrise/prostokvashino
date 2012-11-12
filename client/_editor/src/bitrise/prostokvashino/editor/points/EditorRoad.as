@@ -16,7 +16,7 @@ package bitrise.prostokvashino.editor.points
 		
 		public var select:Boolean = false;
 		
-		override public function redraw():void {
+		public function redraw():void {
 			if (sprite) {
 				const g:Graphics = sprite.graphics;
 				g.clear();
@@ -56,7 +56,7 @@ package bitrise.prostokvashino.editor.points
 			}
 		}
 		
-		override public function draw(display:Sprite):void {
+		public function draw(display:Sprite):void {
 			clear(display);
 			if (!sprite) {
 				sprite = new EditorSprite();
@@ -66,11 +66,24 @@ package bitrise.prostokvashino.editor.points
 			redraw();
 		}
 		
-		override public function clear(display:Sprite):void {
+		public function clear(display:Sprite):void {
 			if (sprite) {
 				display.removeChild(sprite);
 				sprite = null;
 			}
+		}
+		
+		public function getPoints(x:Number, y:Number, radius:Number, points:Vector.<EditorPoint> = null):Vector.<EditorPoint> {
+			if (!points)
+				points = new Vector.<EditorPoint>();
+			for each(var point:EditorPoint in vector) {
+				var dx:int = (point.x - x);
+				var dy:int = (point.y - y);
+				point.lastLength = Math.sqrt(dx * dx + dy * dy);
+				if (point.lastLength  <= radius)
+					points.push(point);
+			}
+			return points;
 		}
 		
 	}

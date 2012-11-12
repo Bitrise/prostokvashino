@@ -1,13 +1,10 @@
 package bitrise.prostokvashino.base.points
 {
-	import flash.display.Graphics;
-	import flash.display.Sprite;
-	import flash.events.EventDispatcher;
 
-	public class RoadBase extends EventDispatcher
+	public class RoadBase
 	{
 		
-		protected var vector:Vector.<PointBase>;
+		public var vector:Vector.<PointBase>;
 		
 		public function RoadBase() {
 			vector = new Vector.<PointBase>
@@ -37,18 +34,6 @@ package bitrise.prostokvashino.base.points
 				vector.splice(index, 1);
 			}
 			return point;
-		}
-		
-		public function redraw():void {
-			
-		}
-		
-		public function draw(display:Sprite):void {
-			
-		}
-		
-		public function clear(display:Sprite):void {
-			
 		}
 		
 	}

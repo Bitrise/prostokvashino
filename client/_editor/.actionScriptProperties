@@ -12,6 +12,7 @@
       <libraryPathEntry kind="1" linkType="1" path="libs"/>
       <libraryPathEntry kind="3" linkType="1" path="/_base/bin/_base.swc" useDefaultLinkType="false"/>
       <libraryPathEntry kind="3" linkType="1" path="/core/bin/core.swc" useDefaultLinkType="false"/>
+      <libraryPathEntry kind="3" linkType="1" path="/_embed/bin/_embed.swc" useDefaultLinkType="false"/>
     </libraryPath>
     <sourceAttachmentPath/>
   </compiler>

@@ -9,16 +9,10 @@ package bitrise.prostokvashino.base.view.iso
 	
 	public class Scene extends UIComponent
 	{
-		
-		private var _highlightSprite:Sprite;
-		
 		public function Scene()
 		{
 			super();
 			addChild(new EmbedScene.test);
-			
-			_highlightSprite = new Sprite();
-			addChild(_highlightSprite);
 		}
 		
 		private var _map:Map;
@@ -33,35 +27,12 @@ package bitrise.prostokvashino.base.view.iso
 			_mapChangeFlag = true;
 			invalidateProperties();
 		}
-		
-		private var _highlight:Boolean;
-		private var _highlightChangeFlag:Boolean = false;
-		
-		public function get highlight():Boolean {
-			return _highlight;
-		}
-
-		public function set highlight(value:Boolean):void {
-			_highlight = value;
-			if (_map) {
-				_highlightChangeFlag = true;
-				invalidateProperties();
-			}
-		}
 
 		override protected function commitProperties():void {
 			super.commitProperties();
 			if (_mapChangeFlag) {
 				_mapChangeFlag = false;
-				_highlightChangeFlag = true;
-			}
-			if (_highlightChangeFlag && _map) {
-				_highlightChangeFlag = false;
-				if (_highlight) {
-					_map.sprite = _highlightSprite;
-				} else {
-					_map.sprite = null;
-				}
+				
 			}
 		}
 

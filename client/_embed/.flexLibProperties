@@ -2,6 +2,7 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="EmbedScene"/>
+    <classEntry path="EmbedBuilding"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

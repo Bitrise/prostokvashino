@@ -1,32 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
 					   xmlns:s="library://ns.adobe.com/flex/spark" 
-					   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:iso="bitrise.prostokvashino.base.view.iso.*" width="900" height="600" >
+					   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:iso="bitrise.prostokvashino.base.view.iso.*" width="900" height="600" creationComplete="creationCompleteHandler(event)" >
 	
 	<fx:Script>
 		<![CDATA[
+			import bitrise.prostokvashino.base.points.Graph;
 			import bitrise.prostokvashino.base.points.Map;
 			import bitrise.prostokvashino.base.points.PointBase;
 			import bitrise.prostokvashino.base.points.RoadBase;
 			import bitrise.prostokvashino.editor.FileBrowser;
 			import bitrise.prostokvashino.editor.SelectImageWindow;
+			import bitrise.prostokvashino.editor.points.EditorMap;
 			import bitrise.prostokvashino.editor.points.EditorPoint;
 			import bitrise.prostokvashino.editor.points.EditorRoad;
 			import bitrise.prostokvashino.editor.points.EditorSprite;
 			
 			import mx.collections.ArrayCollection;
 			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
 			import mx.managers.PopUpManager;
+			
+			import spark.components.Image;
 			
 			
 			public static const images:ArrayCollection = FileBrowser.brows("libs/scene/");
 			
 			[Bindable]
-			public var map:Map = new Map();
+			public var map:EditorMap = new EditorMap();
+			
 			[Bindable]
 			private var road:EditorRoad;
+			
 			[Bindable]
 			private var point:EditorPoint;
+			
+			[Bindable]
+			private var graph:Graph;
+			
+			[Bindable]
+			private var buildable:Boolean;
+			private var image:Image;
+			private var buildingRemove:Boolean = false;
 			
 			protected function selectImageClickHandler(event:MouseEvent):void
 			{
@@ -36,6 +51,7 @@
 			}
 			
 			protected function createRoadHandler(event:MouseEvent):void {
+				removeToools();
 				road = map.addRoad(new EditorRoad()) as EditorRoad;
 				road.select = true;
 				point = road.addPoint(new EditorPoint()) as EditorPoint;
@@ -44,19 +60,51 @@
 			}
 			
 			protected function sceneClickHandler(event:MouseEvent):void {
-				if (road) {
-					if (point && point.temp) {
+				if (road && point) {
+						
+					const ps:Vector.<EditorPoint> = map.getPoints(event.localX, event.localY, 10);
+					if (ps.length) {
+						var min:EditorPoint = ps[0];
+						for each(var p:EditorPoint in ps) {
+							if (p.lastLength <= min.lastLength && p != point)
+								min = p;
+						}
+						point.x = min.x;
+						point.y = min.y;
+					}
+					
+					if (point.temp) {
+					
 						point.select = false;
 						point = road.addPoint(new EditorPoint()) as EditorPoint;
 						point.select = true;
 						point.temp = true;
+						
 					}
+				} else if (buildingRemove) {
+					image = event.target as Image;
+					removeBuildClickHandler(null);
+					buildingRemove = false;
+				} else if (image) {
+					image.mouseEnabled = true;
+					image = null;
 				} else {
 					const sprite:EditorSprite = event.target as EditorSprite;
 					if (sprite) {
-						road = sprite.road;
-						road.select = true;
-						road.redraw();
+						if (fromTo) {
+							const vector:Vector.<EditorPoint> = sprite.road.getPoints(event.localX, event.localY, 10);
+							if (vector.length) {
+								const node:PointBase = graph.getNode(vector[0].x, vector[0].y);
+								if (node) {
+									fromTo.push(node);
+									redrawFromTo();
+								}
+							}
+						} else {
+							road = sprite.road;
+							road.select = true;
+							road.redraw();
+						}
 					}
 				}
 			}
@@ -65,6 +113,8 @@
 				if (point && road) {
 					point.move(event.localX, event.localY);
 					road.redraw();
+				} else if (image) {
+					image.move(event.localX + 10, event.localY + 10);
 				}
 			}
 			
@@ -96,6 +146,108 @@
 				}
 			}
 			
+			protected function roadRemoveClickHandler(event:MouseEvent):void {
+				if (road) {
+					map.removeRoad(road);
+					road = null;
+					point = null;
+				}
+			}
+			
+			protected function checkMapClickHandler(event:MouseEvent):void {
+				graph = new Graph(map);
+				fromTo = null;
+				removeToools();
+			}
+			
+			protected function creationCompleteHandler(event:FlexEvent):void {
+				map.sprite = highlight;
+			}
+			
+			private var fromTo:Vector.<PointBase>;
+			
+			protected function seletFromToClickHandler(event:MouseEvent):void
+			{
+				fromTo = new Vector.<PointBase>();
+			}
+			
+			protected function redrawFromTo():void {
+				if (fromTo) {
+					graphed.graphics.clear();
+					for each(var point:PointBase in fromTo) {
+						graphed.graphics.beginFill(0xFF00FF, 1);
+						graphed.graphics.drawCircle(point.x, point.y, 5);
+						graphed.graphics.endFill();
+					}
+					if (fromTo.length > 1) {
+						const vector:Vector.<PointBase> = graph.pathNodeToNode(fromTo.pop(), fromTo.pop());
+						if (vector) {
+							
+							graphed.graphics.lineStyle(3, 0xFF00FF, 1);
+							graphed.graphics.moveTo(vector[0].x, vector[0].y);
+							vector.shift();
+							for each(point in vector) {
+								graphed.graphics.lineTo(point.x, point.y);
+							}
+						}
+						fromTo.length = 0;
+					}
+				} else {
+					graphed.graphics.clear();
+				}
+			}
+			
+			protected function graphCompleteClickHandler(event:MouseEvent):void
+			{
+				graph = null;
+				fromTo = null;
+				graphed.graphics.clear();
+			}
+			
+			protected function linkedClickHandler(event:MouseEvent):void {
+				removeToools();
+			}
+			
+			private function removeToools():void {
+				roadCompleteClickHandler(null);
+				graphCompleteClickHandler(null);
+				buildCompleteClickHandler(null);
+			}
+			
+			protected function buildClickHandler(event:MouseEvent):void {
+				removeToools();
+				buildable = true;
+				buildLayer.mouseChildren = true;
+				buildLayer.mouseEnabled = true;
+			}
+			
+			private function build(source:Class):void {
+				removeBuildClickHandler(null);
+				image = new Image();
+				image.mouseChildren = false;
+				image.source = source;
+				buildLayer.addElement(image);
+			}
+			
+			protected function removeBuildClickHandler(event:MouseEvent):void
+			{
+				if (image) {
+					buildLayer.removeElement(image);
+					image = null;
+				} else {
+					buildingRemove = true;
+				}
+			}
+			
+			protected function buildCompleteClickHandler(event:MouseEvent):void
+			{
+				removeBuildClickHandler(null);
+				buildingRemove = false;
+				buildable = false;
+				buildLayer.mouseChildren = false;
+				buildLayer.mouseEnabled = false;
+			}
+			
 		]]>
 	</fx:Script>
 	
@@ -103,24 +255,45 @@
 		<s:layout>
 			<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center" />
 		</s:layout>
-		<iso:Scene width="800" height="450" highlight="{true}" map="{map}" 
-				   click="sceneClickHandler(event)" 
-				   mouseMove="sceneMouseMoveHandler(event)" />
+		<s:Group click="sceneClickHandler(event)" 
+				 mouseMove="sceneMouseMoveHandler(event)" >
+			<iso:Scene width="800" height="450" map="{map}" />
+			<s:Group id="buildLayer" width="800" height="450" />
+			<mx:UIComponent id="highlight" width="800" height="450" />
+			<mx:UIComponent id="graphed" width="800" height="450" mouseEnabled="false" mouseChildren="false" />
+		</s:Group>
 	</s:Group>
 	
 	<s:HGroup top="5" left="5">
 		<s:Button label="Фон" click="selectImageClickHandler(event)" />
 		<s:Button label="Создать маршрут" click="createRoadHandler(event)" />
+		<s:Button label="Построить" click="buildClickHandler(event)" />
+		<s:Button label="Связать" click="linkedClickHandler(event)" />
+		<s:Button label="Проверить карту" click="checkMapClickHandler(event)" />
 	</s:HGroup>
 	
 	<s:HGroup bottom="5" left="5">
 		<s:HGroup visible="{road != null}" includeInLayout="{road != null}" verticalAlign="middle" >
 			<s:Label text="Маршрут: " />
+			<s:Button label="Удалить" click="roadRemoveClickHandler(event)" />
 			<s:Button label="Завершить" click="roadCompleteClickHandler(event)" />
 		</s:HGroup>
 		<s:HGroup visible="{point != null}" includeInLayout="{point != null}" verticalAlign="middle" >
 			<s:Label text="Точка: " />
 			<s:Button label="Завершить" click="poinCompleteClickHandler(event)" />
+		</s:HGroup>
+		<s:HGroup visible="{graph != null}" includeInLayout="{graph != null}" verticalAlign="middle" >
+			<s:Label text="Граф: " />
+			<s:Button label="Выбрать" click="seletFromToClickHandler(event)" />
+			<s:Button label="Завершить" click="graphCompleteClickHandler(event)" />
+		</s:HGroup>
+		<s:HGroup visible="{buildable}" includeInLayout="{buildable}" verticalAlign="middle" >
+			<s:Label text="Постройка: " />
+			<s:Button label="Завод" click="build(EmbedBuilding.zavod)" />
+			<s:Button label="Ферма" click="build(EmbedBuilding.farm)" />
+			<s:Button label="Магазин" click="build(EmbedBuilding.shop)" />
+			<s:Button label="Удалить" click="removeBuildClickHandler(event)" />
+			<s:Button label="Завершить" click="buildCompleteClickHandler(event)" />
 		</s:HGroup>
 	</s:HGroup>
 	

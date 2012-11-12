@@ -7,6 +7,7 @@ package bitrise.prostokvashino.editor.points
 		
 		public var temp:Boolean;
 		public var select:Boolean = false;
+		public var lastLength:Number = Number.MAX_VALUE;
 		
 		public function EditorPoint(x:Number=0, y:Number=0)
 		{

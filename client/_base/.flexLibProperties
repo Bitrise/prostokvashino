@@ -16,6 +16,8 @@
     <classEntry path="bitrise.prostokvashino.base.points.PointBase"/>
     <classEntry path="bitrise.prostokvashino.base.points.RoadBase"/>
     <classEntry path="bitrise.prostokvashino.base.points.Map"/>
+    <classEntry path="bitrise.prostokvashino.base.points.Graph"/>
+    <classEntry path="bitrise.prostokvashino.base.points.Building"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

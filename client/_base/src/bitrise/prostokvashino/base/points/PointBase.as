@@ -1,12 +1,12 @@
 package bitrise.prostokvashino.base.points
 {
-	import flash.events.EventDispatcher;
 
-	public class PointBase extends EventDispatcher
+	public class PointBase
 	{
 		
 		public var x:Number;
 		public var y:Number;
+		public var name:String;
 		
 		public function PointBase(x:Number = 0, y:Number = 0) {
 			this.x = x;
