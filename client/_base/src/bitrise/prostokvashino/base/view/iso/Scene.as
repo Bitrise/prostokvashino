@@ -9,10 +9,18 @@ package bitrise.prostokvashino.base.view.iso
 	
 	public class Scene extends UIComponent
 	{
+		
+		public var buildings:Sprite;
+		public var cars:Sprite;
+		
 		public function Scene()
 		{
 			super();
 			addChild(new EmbedScene.test);
+			buildings = new Sprite();
+			addChild(buildings);
+			cars = new Sprite();
+			addChild(cars);
 		}
 		
 		private var _map:Map;
@@ -23,11 +31,15 @@ package bitrise.prostokvashino.base.view.iso
 		}
 		
 		public function set map(value:Map):void {
+			if (_map)
+				_map.scene = null;
 			_map = value;
+			if (_map)
+				_map.scene = this;
 			_mapChangeFlag = true;
 			invalidateProperties();
 		}
-
+		
 		override protected function commitProperties():void {
 			super.commitProperties();
 			if (_mapChangeFlag) {

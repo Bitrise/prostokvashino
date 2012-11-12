@@ -1,12 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		 xmlns:s="library://ns.adobe.com/flex/spark" 
-		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:iso="bitrise.prostokvashino.base.view.iso.*" xmlns:gui="bitrise.prostokvashino.base.view.gui.*">
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" 
+		 xmlns:iso="bitrise.prostokvashino.base.view.iso.*" 
+		 xmlns:gui="bitrise.prostokvashino.base.view.gui.*" 
+		 creationComplete="creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import bitrise.prostokvashino.base.game.GameCar;
+			import bitrise.prostokvashino.base.game.GameMap;
+			import bitrise.prostokvashino.base.points.BuildingSprite;
+			
+			import flash.utils.getTimer;
+			
+			import mx.events.FlexEvent;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void {
+				scene.map.deserialize(new EmbedMap.default_map);
+				GameMap(scene.map).compile();
+			}
+			
+			private var last:BuildingSprite;
+			
+			protected function scene_mouseMoveHandler(event:MouseEvent):void
+			{
+				const container:BuildingSprite = event.target as BuildingSprite;
+				if (select && container == select)
+					return;
+				
+				if (container) {
+					if (last != container) {
+						container.filters = [overFilter];
+						if (last) {
+							last.filters = [];
+						}
+						last = container;
+					}
+				} else {
+					if (last) {
+						last.filters = [];
+						last = null;
+					}
+				}
+			}
+			
+			private var select:BuildingSprite;
+			
+			protected function scene_clickHandler(event:MouseEvent):void {
+				const container:BuildingSprite = event.target as BuildingSprite;
+				if (select && container == select)
+					return;
+				
+				if (select && container) {
+					if (go(select, container)) {
+						select.filters = [];
+						select = null;
+						return;
+					} else {
+						
+						return;
+					}
+				}
+				
+				if (last) {
+					if (select) {
+						select.filters = [];
+					}
+					select = last;
+					select.filters = [selectFilter];
+					last = null;
+				} else {
+					if (select) {
+						select.filters = [];
+						select = null;
+					}
+				}
+			}
+			
+			public function go(from:BuildingSprite, to:BuildingSprite):Boolean {
+				const car:GameCar = GameMap(scene.map).addCar(new GameCar(EmbedCar.car_top, EmbedCar.car_bottom));
+				GameMap(scene.map).goBuildingToBuilding(car, from.building, to.building);
+				return true;
+			}
+			
+			private var time:uint;
+			
+			protected function enterFrameHandler(event:Event):void
+			{
+				if (scene && scene.map) {
+					const newTime:uint = getTimer();
+					if (time == 0)
+						time = getTimer();
+					else {
+						
+						GameMap(scene.map).render(newTime - time);
+						time = newTime;
+					}
+				
+				}
+			}
+			
+		]]>
+	</fx:Script>
 	
-	<iso:Scene width="100%" height="100%" />
+	<iso:Scene id="scene" width="100%" height="100%" map="{new GameMap}" mouseMove="scene_mouseMoveHandler(event)" click="scene_clickHandler(event)" enterFrame="enterFrameHandler(event)"/>
 	<gui:Canvace width="100%" height="100%" />
 	
 	<fx:Declarations>
-		<!-- Разместить невизуальные элементы (например, службы или объекты значений) -->
+		<mx:GlowFilter id="overFilter" alpha="0.5" blurX="6" blurY="6" color="0xFFFFFF" quality="1" strength="5" />
+		<mx:GlowFilter id="selectFilter" alpha="0.7" blurX="7" blurY="7" color="0xFF7700" quality="1" strength="10" />
 	</fx:Declarations>
 </s:Group>

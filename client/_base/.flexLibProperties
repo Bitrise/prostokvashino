@@ -18,6 +18,17 @@
     <classEntry path="bitrise.prostokvashino.base.points.Map"/>
     <classEntry path="bitrise.prostokvashino.base.points.Graph"/>
     <classEntry path="bitrise.prostokvashino.base.points.Building"/>
+    <classEntry path="bitrise.prostokvashino.base.points.BuildingSprite"/>
+    <classEntry path="bitrise.prostokvashino.base.game.GameMap"/>
+    <classEntry path="bitrise.prostokvashino.base.game.GameBuilding"/>
+    <classEntry path="bitrise.prostokvashino.base.game.GameRoad"/>
+    <classEntry path="bitrise.prostokvashino.base.game.GameCar"/>
+    <classEntry path="bitrise.prostokvashino.base.game.action.ActionBase"/>
+    <classEntry path="bitrise.prostokvashino.base.game.action.VectorMoveAction"/>
+    <classEntry path="bitrise.prostokvashino.base.game.CarSprite"/>
+    <classEntry path="bitrise.prostokvashino.base.game.action.WaitAction"/>
+    <classEntry path="bitrise.prostokvashino.base.game.action.AddScore"/>
+    <classEntry path="bitrise.prostokvashino.base.game.action.HideAction"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

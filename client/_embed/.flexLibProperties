@@ -3,6 +3,8 @@
   <includeClasses>
     <classEntry path="EmbedScene"/>
     <classEntry path="EmbedBuilding"/>
+    <classEntry path="EmbedMap"/>
+    <classEntry path="EmbedCar"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

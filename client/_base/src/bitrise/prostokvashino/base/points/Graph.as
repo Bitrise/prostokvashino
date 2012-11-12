@@ -38,6 +38,7 @@ package bitrise.prostokvashino.base.points
 					delete named[main.name];
 				}
 				main.name = point.name;
+				named[main.name] = main;
 			}
 			for each(point in vector) {
 				const child:Node = getNode(point.x, point.y) as Node;

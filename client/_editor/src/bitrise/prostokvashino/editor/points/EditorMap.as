@@ -1,6 +1,9 @@
 package bitrise.prostokvashino.editor.points
 {
+	import bitrise.core.format.json.JSON;
+	import bitrise.prostokvashino.base.points.Building;
 	import bitrise.prostokvashino.base.points.Map;
+	import bitrise.prostokvashino.base.points.PointBase;
 	import bitrise.prostokvashino.base.points.RoadBase;
 	
 	import flash.display.Sprite;
@@ -26,13 +29,6 @@ package bitrise.prostokvashino.editor.points
 			return super.addRoad(road);
 		}
 		
-		override public function addRoadAt(road:RoadBase, index:uint):RoadBase {
-			if (_sprite) {
-				EditorRoad(road).draw(_sprite);
-			}
-			return super.addRoadAt(road, index);
-		}
-		
 		override public function removeRoad(road:RoadBase):RoadBase {
 			const index:int = vector.indexOf(road);
 			if (index >= 0) {
@@ -41,16 +37,6 @@ package bitrise.prostokvashino.editor.points
 				}
 			}
 			return super.removeRoad(road);
-		}
-		
-		override public function removeRoadAt(index:uint):RoadBase {
-			const road:RoadBase = vector[index];
-			if (road) {
-				if (_sprite) {
-					EditorRoad(road).clear(_sprite);
-				}
-			}
-			return super.removeRoadAt(index);
 		}
 		
 		public function get sprite():Sprite {
@@ -77,6 +63,55 @@ package bitrise.prostokvashino.editor.points
 			for each(var road:RoadBase in vector) {
 				EditorRoad(road).clear(display);
 			}
+		}
+		
+		private var mem:Object;
+		
+		override public function deserialize(json:String):void {
+			free();
+			mem = new Object();
+			const object:Object = JSON.decode(json);
+			for each(var building:Object in object.buildings) {
+				const b:EditorBuilding = createBuilding(building) as EditorBuilding;
+				addBuilding(b);
+			}
+			for each(var road:Object in object.roads) {
+				const r:EditorRoad = createRoad(road) as EditorRoad;
+				for each(var point:Object in road.points) {
+					const p:EditorPoint = createPoint(point) as EditorPoint;
+					r.addPoint(p);
+				}
+				addRoad(r);
+			}
+			mem = null;
+		}
+		
+		override protected function createBuilding(building:Object):Building {
+			const b:EditorBuilding = new EditorBuilding(building.source);
+			b.name = building.name;
+			mem[b.name] = b;
+			b.x = building.x;
+			b.y = building.y;
+			b.apply();
+			return b;
+		}
+		
+		override protected function createRoad(road:Object):RoadBase {
+			const r:EditorRoad = new EditorRoad();
+			return r;
+		}
+		
+		override protected function createPoint(point:Object):PointBase {
+			const p:EditorPoint = new EditorPoint();
+			p.name = point.name;
+			const b:EditorBuilding = mem[p.name];
+			if (b) {
+				p.building = b;
+				b.point = p;
+			}
+			p.x = point.x;
+			p.y = point.y;
+			return p;
 		}
 		
 	}

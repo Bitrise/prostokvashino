@@ -5,6 +5,7 @@ package bitrise.prostokvashino.editor.points
 	public class EditorPoint extends PointBase
 	{
 		
+		public var building:EditorBuilding;
 		public var temp:Boolean;
 		public var select:Boolean = false;
 		public var lastLength:Number = Number.MAX_VALUE;
@@ -13,5 +14,12 @@ package bitrise.prostokvashino.editor.points
 		{
 			super(x, y);
 		}
+		
+		override public function get name():String {
+			if (building)
+				return building.name;
+			return super.name;
+		}
+		
 	}
 }

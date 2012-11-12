@@ -5,12 +5,16 @@
 	
 	<fx:Script>
 		<![CDATA[
+			import bitrise.core.utils.GeomUtils;
+			import bitrise.prostokvashino.base.points.Building;
+			import bitrise.prostokvashino.base.points.BuildingSprite;
 			import bitrise.prostokvashino.base.points.Graph;
 			import bitrise.prostokvashino.base.points.Map;
 			import bitrise.prostokvashino.base.points.PointBase;
 			import bitrise.prostokvashino.base.points.RoadBase;
 			import bitrise.prostokvashino.editor.FileBrowser;
 			import bitrise.prostokvashino.editor.SelectImageWindow;
+			import bitrise.prostokvashino.editor.points.EditorBuilding;
 			import bitrise.prostokvashino.editor.points.EditorMap;
 			import bitrise.prostokvashino.editor.points.EditorPoint;
 			import bitrise.prostokvashino.editor.points.EditorRoad;
@@ -40,7 +44,7 @@
 			
 			[Bindable]
 			private var buildable:Boolean;
-			private var image:Image;
+			private var building:EditorBuilding;
 			private var buildingRemove:Boolean = false;
 			
 			protected function selectImageClickHandler(event:MouseEvent):void
@@ -57,42 +61,62 @@
 				point = road.addPoint(new EditorPoint()) as EditorPoint;
 				point.select = true;
 				point.temp = true;
+				highlight.mouseChildren = highlight.mouseEnabled = false;
 			}
 			
 			protected function sceneClickHandler(event:MouseEvent):void {
+				const localX:Number = scene.mouseX;
+				const localY:Number = scene.mouseY;
+				const buildingContainer:BuildingSprite = event.target as BuildingSprite;
 				if (road && point) {
-						
-					const ps:Vector.<EditorPoint> = map.getPoints(event.localX, event.localY, 10);
-					if (ps.length) {
-						var min:EditorPoint = ps[0];
-						for each(var p:EditorPoint in ps) {
-							if (p.lastLength <= min.lastLength && p != point)
-								min = p;
-						}
-						point.x = min.x;
-						point.y = min.y;
-					}
-					
-					if (point.temp) {
-					
+					if (buildingContainer && GeomUtils.lineLength( buildingContainer.x + buildingContainer.width / 2, buildingContainer.y + buildingContainer.height / 2, localX, localY ) <= 25 ) {
+						if ((buildingContainer.building as EditorBuilding).point || point.building)
+							return;
+						point.building = buildingContainer.building as EditorBuilding;
+						(buildingContainer.building as EditorBuilding).point = point;
+						point.x = buildingContainer.x + buildingContainer.width / 2;
+						point.y = buildingContainer.y + buildingContainer.height / 2;
+						point.temp = false;
 						point.select = false;
-						point = road.addPoint(new EditorPoint()) as EditorPoint;
-						point.select = true;
-						point.temp = true;
+						poinCompleteClickHandler(null);
+					} else {
+						const ps:Vector.<EditorPoint> = map.getPoints(localX, localY, 10);
+						if (ps.length) {
+							var min:EditorPoint = ps[0];
+							for each(var p:EditorPoint in ps) {
+								if (p.lastLength <= min.lastLength && p != point)
+									min = p;
+							}
+							point.x = min.x;
+							point.y = min.y;
+						}
 						
+						if (point.temp) {
+						
+							point.select = false;
+							point = road.addPoint(new EditorPoint()) as EditorPoint;
+							highlight.mouseChildren = highlight.mouseEnabled = false;
+							point.select = true;
+							point.temp = true;
+							
+						}
 					}
-				} else if (buildingRemove) {
-					image = event.target as Image;
-					removeBuildClickHandler(null);
-					buildingRemove = false;
-				} else if (image) {
-					image.mouseEnabled = true;
-					image = null;
+				} else if (buildable) {
+					if (buildingRemove) {
+						if (buildingContainer)
+							building = buildingContainer.building as EditorBuilding;
+						removeBuildClickHandler(null);
+						buildingRemove = false;
+					} else if (building) {
+						building.sprite.addEventListener(MouseEvent.ROLL_OVER, handler_buildingOver);
+						building.sprite.addEventListener(MouseEvent.ROLL_OUT, handler_buildingOut);
+						building = null;
+					}	
 				} else {
 					const sprite:EditorSprite = event.target as EditorSprite;
 					if (sprite) {
 						if (fromTo) {
-							const vector:Vector.<EditorPoint> = sprite.road.getPoints(event.localX, event.localY, 10);
+							const vector:Vector.<EditorPoint> = sprite.road.getPoints(localX, localY, 10);
 							if (vector.length) {
 								const node:PointBase = graph.getNode(vector[0].x, vector[0].y);
 								if (node) {
@@ -102,6 +126,7 @@
 							}
 						} else {
 							road = sprite.road;
+							highlight.mouseChildren = highlight.mouseEnabled = true;
 							road.select = true;
 							road.redraw();
 						}
@@ -110,11 +135,13 @@
 			}
 			
 			protected function sceneMouseMoveHandler(event:MouseEvent):void {
+				const localX:Number = scene.mouseX;
+				const localY:Number = scene.mouseY;
 				if (point && road) {
-					point.move(event.localX, event.localY);
+					point.move(localX, localY);
 					road.redraw();
-				} else if (image) {
-					image.move(event.localX + 10, event.localY + 10);
+				} else if (building) {
+					building.move(localX - building.sprite.width / 2, localY - building.sprite.height / 2);
 				}
 			}
 			
@@ -128,6 +155,8 @@
 					point = null;
 					road.redraw();
 				}
+				highlight.mouseChildren = highlight.mouseEnabled = true;
+				roadCompleteClickHandler(null);
 			}
 			
 			protected function roadCompleteClickHandler(event:MouseEvent):void
@@ -141,23 +170,35 @@
 						}
 						point = null;
 					}
-					road.redraw();
+					if (road.vector.length > 1) {
+						road.redraw();
+					} else {
+						map.removeRoad(road);
+					}
 					road = null;
 				}
+				highlight.mouseChildren = highlight.mouseEnabled = true;
 			}
 			
 			protected function roadRemoveClickHandler(event:MouseEvent):void {
 				if (road) {
+					for each(var p:EditorPoint in road.vector) {
+						if (p.building) {
+							p.building.point = null;
+							p.building = null;
+						}
+					}
 					map.removeRoad(road);
 					road = null;
 					point = null;
 				}
+				highlight.mouseChildren = highlight.mouseEnabled = true;
 			}
 			
 			protected function checkMapClickHandler(event:MouseEvent):void {
+				removeToools();
 				graph = new Graph(map);
 				fromTo = null;
-				removeToools();
 			}
 			
 			protected function creationCompleteHandler(event:FlexEvent):void {
@@ -197,8 +238,7 @@
 				}
 			}
 			
-			protected function graphCompleteClickHandler(event:MouseEvent):void
-			{
+			protected function graphCompleteClickHandler(event:MouseEvent):void {
 				graph = null;
 				fromTo = null;
 				graphed.graphics.clear();
@@ -217,35 +257,74 @@
 			protected function buildClickHandler(event:MouseEvent):void {
 				removeToools();
 				buildable = true;
-				buildLayer.mouseChildren = true;
-				buildLayer.mouseEnabled = true;
 			}
 			
 			private function build(source:Class):void {
 				removeBuildClickHandler(null);
-				image = new Image();
-				image.mouseChildren = false;
-				image.source = source;
-				buildLayer.addElement(image);
+				buildingRemove = false;
+				building = map.addBuilding(new EditorBuilding(source)) as EditorBuilding;
 			}
 			
-			protected function removeBuildClickHandler(event:MouseEvent):void
-			{
-				if (image) {
-					buildLayer.removeElement(image);
-					image = null;
+			protected function removeBuildClickHandler(event:MouseEvent):void {
+				if (building) {
+					if (building.point) {
+						building.point.building = null;
+						building.point = null;
+					}
+					map.removeBuilding(building);
+					building.sprite.addEventListener(MouseEvent.ROLL_OVER, handler_buildingOver);
+					building.sprite.addEventListener(MouseEvent.ROLL_OUT, handler_buildingOut);
+					building = null;
 				} else {
 					buildingRemove = true;
 				}
 			}
 			
-			protected function buildCompleteClickHandler(event:MouseEvent):void
-			{
+			protected function buildCompleteClickHandler(event:MouseEvent):void {
 				removeBuildClickHandler(null);
 				buildingRemove = false;
 				buildable = false;
-				buildLayer.mouseChildren = false;
-				buildLayer.mouseEnabled = false;
+			}
+			
+			private function handler_buildingOver(event:Event):void {
+				const container:BuildingSprite = event.target as BuildingSprite;
+				if (road && point && container) {
+					const shape:Shape = new Shape();
+					shape.name = "shape";
+					shape.graphics.clear();
+					shape.graphics.lineStyle(3, 0xFF00FF, 1);
+					shape.graphics.drawCircle(container.width / 2, container.height / 2, 20);
+					container.addChild(shape);
+				}
+			}
+			
+			private function handler_buildingOut(event:Event):void {
+				const container:BuildingSprite = event.target as BuildingSprite;
+				if (container && container.getChildByName("shape"))
+					container.removeChild(container.getChildByName("shape"));
+			}
+			
+			protected function saveClickHandler(event:MouseEvent):void {
+				removeToools();
+				const file:File = new File();
+				file.save(map.serealize(), "default_map.js");
+			}
+			
+			private var load:File;
+			protected function loadClickHandler(event:MouseEvent):void {
+				removeToools();
+				load = new File();
+				load.browse([new FileFilter("JSON", "*.js")]);
+				load.addEventListener(Event.SELECT, onFileSelected);
+			}
+			
+			protected function onFileSelected(e:Event):void {
+				load.addEventListener(Event.COMPLETE, onFileLoaded);
+				load.load();
+			}
+			
+			protected function onFileLoaded(e:Event):void {
+				map.deserialize(e.target.data);
 			}
 			
 		]]>
@@ -257,8 +336,7 @@
 		</s:layout>
 		<s:Group click="sceneClickHandler(event)" 
 				 mouseMove="sceneMouseMoveHandler(event)" >
-			<iso:Scene width="800" height="450" map="{map}" />
-			<s:Group id="buildLayer" width="800" height="450" />
+			<iso:Scene id="scene" width="800" height="450" map="{map}" />
 			<mx:UIComponent id="highlight" width="800" height="450" />
 			<mx:UIComponent id="graphed" width="800" height="450" mouseEnabled="false" mouseChildren="false" />
 		</s:Group>
@@ -266,10 +344,11 @@
 	
 	<s:HGroup top="5" left="5">
 		<s:Button label="Фон" click="selectImageClickHandler(event)" />
-		<s:Button label="Создать маршрут" click="createRoadHandler(event)" />
+		<s:Button label="Маршрут" click="createRoadHandler(event)" />
 		<s:Button label="Построить" click="buildClickHandler(event)" />
-		<s:Button label="Связать" click="linkedClickHandler(event)" />
-		<s:Button label="Проверить карту" click="checkMapClickHandler(event)" />
+		<s:Button label="Проверить" click="checkMapClickHandler(event)" />
+		<s:Button label="Сохранить" click="saveClickHandler(event)" />
+		<s:Button label="Загрузить" click="loadClickHandler(event)" />
 	</s:HGroup>
 	
 	<s:HGroup bottom="5" left="5">
